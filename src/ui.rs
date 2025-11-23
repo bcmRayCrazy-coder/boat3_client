@@ -1,5 +1,11 @@
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
+
 use eframe::egui;
-use crate::remote;
+
+use crate::remote::{controller::RemoteController, net::RemoteError};
 
 pub fn create_ui() -> eframe::Result {
     let options = eframe::NativeOptions {
@@ -39,24 +45,27 @@ fn setup_fonts(ctx: &egui::Context) {
 }
 
 struct ClientApp {
-    connection_address: String,
-    connection_state: remote::net::ConnectionState,
-    connection_ping: Option<u32>,
+    runtime: tokio::runtime::Runtime,
+    remote: RemoteController,
+    ping: Arc<Mutex<Option<Duration>>>,
+    error: Arc<Mutex<Option<String>>>,
 }
 
 impl ClientApp {
     fn default(cc: &eframe::CreationContext<'_>) -> Self {
+        let runtime = tokio::runtime::Runtime::new().unwrap();
         setup_fonts(&cc.egui_ctx);
         Self {
-            connection_address: "0.0.0.0:10230".to_owned(),
-            connection_state: remote::net::ConnectionState::Disconnected,
-            connection_ping: None,
+            runtime,
+            remote: RemoteController::new(),
+            ping: Arc::new(Mutex::new(None)),
+            error: Arc::new(Mutex::new(None)),
         }
     }
 
     fn draw_connection_ui(
         &mut self,
-        _ctx: &egui::Context,
+        ctx: &egui::Context,
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
@@ -64,48 +73,43 @@ impl ClientApp {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
                     let address_label = ui.label("Address");
-                    ui.text_edit_singleline(&mut self.connection_address)
+                    ui.text_edit_singleline(&mut self.remote.net.address)
                         .labelled_by(address_label.id);
                 });
                 ui.horizontal(|ui| {
-                    ui.add_enabled_ui(self.connection_state == remote::net::ConnectionState::Connected, |ui| {
-                        if ui.button("Reconnect").clicked() {
-                            println!("Click Reconnect");
-                        }
-                    });
-                    ui.add_enabled_ui(self.connection_state != remote::net::ConnectionState::Connecting, |ui| {
-                        if ui
-                            .button(match self.connection_state {
-                                remote::net::ConnectionState::Connected => "Disconnect",
-                                remote::net::ConnectionState::Disconnected => "Connect",
-                                remote::net::ConnectionState::Connecting => "Connecting...",
-                            })
-                            .clicked()
-                        {
-                            // TODO
-                            match self.connection_state {
-                                remote::net::ConnectionState::Connected => {
-                                    println!("Click Disconnect");
-                                    self.connection_state = remote::net::ConnectionState::Disconnected
+                    if ui.button("Ping").clicked() {
+                        let mut clone_net = self.remote.net.clone();
+                        let clone_ping = Arc::clone(&self.ping);
+                        let clone_error = Arc::clone(&self.error);
+                        let ctx = ctx.clone();
+                        self.runtime.spawn(async move {
+                            match clone_net.net_ping().await {
+                                Ok(result) => {
+                                    let mut ping = clone_ping.lock().unwrap();
+                                    *ping = Some(result);
                                 }
-                                remote::net::ConnectionState::Connecting => {}
-                                remote::net::ConnectionState::Disconnected => {
-                                    println!("Click Connect");
-                                    self.connection_state = remote::net::ConnectionState::Connected
+                                Err(mut err) => {
+                                    let mut error = clone_error.lock().unwrap();
+                                    *error = Some(err.unwrap());
                                 }
                             }
+                            ctx.request_repaint();
+                        });
+                    }
+                    if let Ok(ping) = Arc::clone(&self.ping).try_lock() {
+                        if let Some(ping) = *ping {
+                            ui.label(format!("Ping {}ms", ping.as_millis()));
                         }
-                    });
-                    let ping_text = match self.connection_ping {
-                        Some(n) => format!("Ping {} ms", n.to_string()),
-                        None => match self.connection_state {
-                            remote::net::ConnectionState::Connected => "Ping NaN".to_owned(),
-                            remote::net::ConnectionState::Connecting => "Connecting".to_owned(),
-                            remote::net::ConnectionState::Disconnected => "Disconnected".to_owned(),
-                        },
-                    };
-                    ui.label(ping_text);
+                    }
                 });
+                if let Ok(error) = Arc::clone(&self.error).try_lock() {
+                    match error.clone() {
+                        Some(err) => {
+                            ui.label(err);
+                        }
+                        None => {}
+                    }
+                }
             });
         });
     }

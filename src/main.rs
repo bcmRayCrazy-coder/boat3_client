@@ -2,6 +2,7 @@
 
 use boat3_client::ui;
 
-fn main() -> eframe::Result {
+#[tokio::main]
+async fn main() -> eframe::Result {
     ui::create_ui()
 }
