@@ -1,5 +1,5 @@
 use serde::de;
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 use tokio::io::AsyncWriteExt;
 
 use crate::remote::protocol::response::RemoteResponse;
