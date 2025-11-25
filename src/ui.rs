@@ -5,11 +5,11 @@ use std::{
 
 use eframe::egui;
 
-use crate::remote::{controller::RemoteController, net::RemoteError};
+use crate::remote::controller::RemoteController;
 
 pub fn create_ui() -> eframe::Result {
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([320.0, 240.0]),
+        viewport: egui::ViewportBuilder::default().with_inner_size([480.0, 320.0]),
         ..Default::default()
     };
     eframe::run_native(
@@ -77,6 +77,9 @@ impl ClientApp {
                         .labelled_by(address_label.id);
                 });
                 ui.horizontal(|ui| {
+                    if ui.button("Reset").clicked() {
+                        println!("Reset all Todo");
+                    }
                     if ui.button("Ping").clicked() {
                         let mut clone_net = self.remote.net.clone();
                         let clone_ping = Arc::clone(&self.ping);
@@ -90,7 +93,7 @@ impl ClientApp {
                                 }
                                 Err(mut err) => {
                                     let mut error = clone_error.lock().unwrap();
-                                    *error = Some(err.unwrap());
+                                    *error = Some(err.to_string());
                                 }
                             }
                             ctx.request_repaint();
@@ -121,7 +124,22 @@ impl ClientApp {
     ) {
         ui.collapsing("GPIO", |ui| {
             ui.vertical(|ui| {
-                ui.label("Hi");
+                ui.label("Todo");
+            });
+        });
+    }
+    fn draw_camera_ui(
+        &mut self,
+        _ctx: &egui::Context,
+        _frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
+    ) {
+        ui.collapsing("Camera", |ui| {
+            ui.vertical(|ui| {
+                ui.label("Todo");
+                if ui.button("Fetch Image").clicked() {
+                    println!("Fetch Image Todo");
+                }
             });
         });
     }
@@ -134,7 +152,11 @@ impl eframe::App for ClientApp {
             ui.separator();
             self.draw_connection_ui(ctx, frame, ui);
             ui.separator();
-            self.draw_gpio_ui(ctx, frame, ui);
+            ui.horizontal(|ui| {
+                self.draw_gpio_ui(ctx, frame, ui);
+                ui.separator();
+                self.draw_camera_ui(ctx, frame, ui);
+            });
         });
     }
 }

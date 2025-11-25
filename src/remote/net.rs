@@ -13,12 +13,12 @@ pub enum RemoteError {
 }
 
 impl RemoteError {
-    pub fn unwrap(&mut self) -> String {
+    pub fn to_string(&mut self) -> String {
         match self {
-            Self::ConnectionError(err) => err.to_string(),
-            Self::ParseError(err) => err.to_string(),
-            Self::RemoteError(err) => err.to_string(),
-            Self::OtherError(err) => err.to_string(),
+            Self::ConnectionError(err) => "Connection Error: ".to_owned() + err,
+            Self::ParseError(err) => "Parse Error: ".to_owned() + err,
+            Self::RemoteError(err) => "Remote Error: ".to_owned() + err,
+            Self::OtherError(err) => "Other Error: ".to_owned() + err,
         }
     }
 }
