@@ -4,5 +4,5 @@ use boat3_client::ui;
 
 #[tokio::main]
 async fn main() -> eframe::Result {
-    ui::create_ui()
+    ui::app::create_ui()
 }
