@@ -8,13 +8,15 @@ impl ClientApp {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        ui.collapsing("Camera", |ui| {
-            ui.vertical(|ui| {
-                ui.label("Todo");
-                if ui.button("Fetch Image").clicked() {
-                    println!("Fetch Image Todo");
-                }
+        egui::CollapsingHeader::new("Camera")
+            .default_open(true)
+            .show(ui, |ui| {
+                ui.vertical(|ui| {
+                    ui.label("Todo");
+                    if ui.button("Fetch Image").clicked() {
+                        println!("Fetch Image Todo");
+                    }
+                });
             });
-        });
     }
 }

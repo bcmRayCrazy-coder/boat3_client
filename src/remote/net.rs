@@ -50,7 +50,7 @@ impl RemoteNet {
     pub fn new() -> Self {
         Self {
             client: reqwest::Client::new(),
-            address: "http://0.0.0.0:10230".to_owned(),
+            address: "http://192.168.137.65:10230".to_owned(),
         }
     }
 

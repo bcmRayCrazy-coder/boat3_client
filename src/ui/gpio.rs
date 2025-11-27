@@ -1,5 +1,5 @@
-use eframe::egui;
 use crate::ui::app::ClientApp;
+use eframe::egui;
 
 impl ClientApp {
     pub fn draw_gpio_ui(
@@ -8,13 +8,15 @@ impl ClientApp {
         _frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
     ) {
-        ui.collapsing("GPIO", |ui| {
-            ui.vertical(|ui| {
-                if ui.button("Reset").clicked() {
-                    println!("Reset GPIO");
-                    let _ = self.remote.gpio_reset();
-                }
+        egui::CollapsingHeader::new("GPIO")
+            .default_open(true)
+            .show(ui, |ui| {
+                ui.vertical(|ui| {
+                    if ui.button("Reset").clicked() {
+                        println!("Reset GPIO");
+                        let _ = self.remote.gpio_reset();
+                    }
+                });
             });
-        });
     }
 }

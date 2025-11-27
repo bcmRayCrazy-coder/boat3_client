@@ -1,9 +1,9 @@
+use crate::remote::controller::RemoteController;
+use eframe::egui;
 use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
-use eframe::egui;
-use crate::remote::controller::RemoteController;
 
 pub fn create_ui() -> eframe::Result {
     let options = eframe::NativeOptions {
@@ -47,6 +47,8 @@ pub struct ClientApp {
     pub remote: RemoteController,
     pub ping: Arc<Mutex<Option<Duration>>>,
     pub error: Arc<Mutex<Option<String>>>,
+
+    info_frame_color: Option<egui::Color32>,
 }
 
 impl ClientApp {
@@ -58,15 +60,20 @@ impl ClientApp {
             remote: RemoteController::new(),
             ping: Arc::new(Mutex::new(None)),
             error: Arc::new(Mutex::new(None)),
+
+            info_frame_color: None,
         }
     }
 }
 
 impl eframe::App for ClientApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        egui::TopBottomPanel::top("top_bar_panel").show(ctx, |ui| {
+            ui.vertical_centered_justified(|ui| {
+                ui.heading("Boat3 Client");
+            });
+        });
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Boat3 Client");
-            ui.separator();
             self.draw_connection_ui(ctx, frame, ui);
             ui.separator();
             ui.horizontal(|ui| {
@@ -75,6 +82,17 @@ impl eframe::App for ClientApp {
                 self.draw_camera_ui(ctx, frame, ui);
             });
         });
+
+        egui::TopBottomPanel::bottom("bottom_info_bar_panel")
+            .frame({
+                let mut frame = egui::Frame::new();
+                if let Some(color) = self.info_frame_color {
+                    frame = frame.fill(color);
+                }
+                frame
+            })
+            .show(ctx, |ui| {
+                self.info_frame_color = self.draw_info_ui(ctx, frame, ui);
+            });
     }
 }
-
