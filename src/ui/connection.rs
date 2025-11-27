@@ -19,35 +19,43 @@ impl ClientApp {
                             .labelled_by(address_label.id);
                     });
                     ui.horizontal(|ui| {
-                        if ui.button("Reset").clicked() {
-                            println!("Reset all");
-                            let _ = self.remote.gpio_reset();
+                        let clone_ping_forwarding = Arc::clone(&self.ping_forwarding);
+                        let mut ping_btn_enabled = false;
+                        if let Ok(forwarding) = clone_ping_forwarding.try_lock() {
+                            ping_btn_enabled = !*forwarding;
                         }
-                        if ui.button("Ping").clicked() {
-                            let mut clone_net = self.remote.net.clone();
-                            let clone_ping = Arc::clone(&self.ping);
-                            let clone_error = Arc::clone(&self.error);
-                            let ctx = ctx.clone();
-                            self.runtime.spawn(async move {
-                                let ping_result = clone_net.net_ping().await;
-                                let mut ping = clone_ping.lock().unwrap();
-                                let mut error = clone_error.lock().unwrap();
-                                match ping_result {
-                                    Ok(result) => {
-                                        *ping = Some(result);
-                                        *error = None;
+                        ui.add_enabled_ui(ping_btn_enabled, |ui| {
+                            if ui.button("Ping").clicked() {
+                                let mut clone_net = self.remote.net.clone();
+                                let clone_ping = Arc::clone(&self.ping);
+                                let clone_ping_forwarding = Arc::clone(&self.ping_forwarding);
+                                let clone_info = Arc::clone(&self.info);
+                                let ctx = ctx.clone();
+                                self.runtime.spawn(async move {
+                                    *clone_ping_forwarding.lock().unwrap() = true;
+                                    let ping_result = clone_net.net_ping().await;
+                                    let mut ping = clone_ping.lock().unwrap();
+                                    let mut info = clone_info.lock().unwrap();
+                                    match ping_result {
+                                        Ok(result) => {
+                                            *ping = Some(result);
+                                            *info = Ok(None);
+                                        }
+                                        Err(mut err) => {
+                                            *ping = None;
+                                            *info = Err(err.to_string());
+                                        }
                                     }
-                                    Err(mut err) => {
-                                        *ping = None;
-                                        *error = Some(err.to_string());
-                                    }
-                                }
-                                ctx.request_repaint();
-                            });
-                        }
+                                    *clone_ping_forwarding.lock().unwrap() = false;
+                                    ctx.request_repaint();
+                                });
+                            }
+                        });
                         let clone_ping = Arc::clone(&self.ping);
-                        if let Some(p) = *clone_ping.lock().unwrap() {
-                            ui.label(format!("Ping {}ms", p.as_millis()));
+                        if let Ok(ping) = clone_ping.try_lock() {
+                            if let Some(ping) = ping.clone() {
+                                ui.label(format!("Ping {}ms", ping.as_millis()));
+                            }
                         }
                     });
                 });

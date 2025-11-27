@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use egui::{Color32, RichText};
 
-use crate::ui::app::ClientApp;
+use crate::ui::{app::ClientApp};
 
 impl ClientApp {
     pub fn draw_info_ui(
@@ -15,10 +15,18 @@ impl ClientApp {
         ui.horizontal(|ui| {
             ui.add_space(4.0);
             let mut text = RichText::new("Done");
-            if let Ok(err) = Arc::clone(&self.error).try_lock() {
-                if let Some(err) = err.clone() {
-                    text = RichText::new(err);
-                    color = Some(Color32::from_rgba_unmultiplied(255, 0, 0, 64));
+            if let Ok(res) = Arc::clone(&self.info).try_lock() {
+                match res.clone() {
+                    Ok(info) => {
+                        color = None;
+                        if let Some(info) = info {
+                            text = RichText::new(info)
+                        }
+                    }
+                    Err(err) => {
+                        text = RichText::new(err);
+                        color = Some(Color32::from_rgba_unmultiplied(255, 0, 0, 64));
+                    }
                 }
             }
             ui.label(text.small());

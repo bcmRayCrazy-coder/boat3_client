@@ -45,8 +45,11 @@ fn setup_fonts(ctx: &egui::Context) {
 pub struct ClientApp {
     pub runtime: tokio::runtime::Runtime,
     pub remote: RemoteController,
+
     pub ping: Arc<Mutex<Option<Duration>>>,
-    pub error: Arc<Mutex<Option<String>>>,
+    pub ping_forwarding:Arc<Mutex<bool>>,
+
+    pub info: Arc<Mutex<Result<Option<String>, String>>>,
 
     info_frame_color: Option<egui::Color32>,
 }
@@ -58,8 +61,11 @@ impl ClientApp {
         Self {
             runtime,
             remote: RemoteController::new(),
+
             ping: Arc::new(Mutex::new(None)),
-            error: Arc::new(Mutex::new(None)),
+            ping_forwarding: Arc::new(Mutex::new(false)),
+
+            info: Arc::new(Mutex::new(Ok(None))),
 
             info_frame_color: None,
         }

@@ -16,6 +16,7 @@ impl ClientApp {
                         println!("Reset GPIO");
                         let _ = self.remote.gpio_reset();
                     }
+                    // ui.
                 });
             });
     }
