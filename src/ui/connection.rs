@@ -41,7 +41,7 @@ impl ClientApp {
                                             *ping = Some(result);
                                             *info = Ok(None);
                                         }
-                                        Err(mut err) => {
+                                        Err(err) => {
                                             *ping = None;
                                             *info = Err(err.to_string());
                                         }

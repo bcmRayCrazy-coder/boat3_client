@@ -1,8 +1,4 @@
-use crate::remote::{
-    controller::RemoteController,
-    gpio, net,
-    protocol::gpio::{GPIOMode, RemoteGPIO},
-};
+use crate::remote::{controller::RemoteController, gpio, net, protocol::gpio::RemoteGPIO};
 
 // Don't Modify Me
 macro_rules! giveup_ok {
@@ -12,16 +8,6 @@ macro_rules! giveup_ok {
             Ok(_) => Ok(()),
         }
     };
-}
-
-impl RemoteGPIO {
-    pub fn new(pin: u32, value: u32) -> Self {
-        Self {
-            pin,
-            mode: GPIOMode::UNKNOWN,
-            value,
-        }
-    }
 }
 
 impl RemoteController {

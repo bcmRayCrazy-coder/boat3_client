@@ -1,4 +1,7 @@
-use crate::remote::controller::RemoteController;
+use crate::{remote::
+    controller::RemoteController
+    
+, ui::gpio::ClientAppGPIO};
 use eframe::egui;
 use std::{
     sync::{Arc, Mutex},
@@ -47,7 +50,9 @@ pub struct ClientApp {
     pub remote: RemoteController,
 
     pub ping: Arc<Mutex<Option<Duration>>>,
-    pub ping_forwarding:Arc<Mutex<bool>>,
+    pub ping_forwarding: Arc<Mutex<bool>>,
+
+    pub gpio: ClientAppGPIO,
 
     pub info: Arc<Mutex<Result<Option<String>, String>>>,
 
@@ -64,6 +69,8 @@ impl ClientApp {
 
             ping: Arc::new(Mutex::new(None)),
             ping_forwarding: Arc::new(Mutex::new(false)),
+
+            gpio: ClientAppGPIO::new(),
 
             info: Arc::new(Mutex::new(Ok(None))),
 
@@ -84,8 +91,8 @@ impl eframe::App for ClientApp {
             ui.separator();
             ui.horizontal(|ui| {
                 self.draw_gpio_ui(ctx, frame, ui);
-                ui.separator();
-                self.draw_camera_ui(ctx, frame, ui);
+                // ui.separator();
+                // self.draw_camera_ui(ctx, frame, ui);
             });
         });
 

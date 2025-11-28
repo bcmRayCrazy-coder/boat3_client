@@ -13,7 +13,7 @@ pub enum RemoteError {
 }
 
 impl RemoteError {
-    pub fn to_string(&mut self) -> String {
+    pub fn to_string(& self) -> String {
         match self {
             Self::ConnectionError(err) => "Connection Error: ".to_owned() + err,
             Self::ParseError(err) => "Parse Error: ".to_owned() + err,
